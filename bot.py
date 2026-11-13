@@ -1576,16 +1576,19 @@ class ManageView(discord.ui.View):
                 await railway_service_deploy(service_id, environment_id)
                 target_vps['status'] = 'deploying'
                 save_vps_data()
+               
                 await interaction.followup.send(
                     embed=create_success_embed(
                         "🌐 SSHX Starting",
-                        "Service redeploy requested. Startup will run:\\n"
-                        "1. `apt update`\\n2. `apt install curl -y`\\n"
-                        "3. Install SSHX and launch it.\\n\\n"
+                        "Service updating...\n"
+                        "Installing curl...\n"
+                        "Installing SSHX...\n"
+                        "Starting SSHX...\n\n"
                         "The SSHX session URL is printed in Railway deployment logs."
                     ),
                     ephemeral=True
                 )
+
             except Exception as e:
                 await interaction.followup.send(
                     embed=create_error_embed("SSHX Start Failed", str(e)), ephemeral=True
