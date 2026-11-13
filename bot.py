@@ -71,9 +71,10 @@ if [ "$MODE" = "idle" ]; then
 fi
 export DEBIAN_FRONTEND=noninteractive
 post() { if [ -n "$HOOK" ]; then curl -fsS -X POST --data-urlencode "content=$1" "$HOOK" >/dev/null || true; fi; echo "$1"; }
-# Step 1: update the VPS
+echo "Service updating..."
 apt-get update
-# Step 2: install curl
+
+echo "Installing curl..."
 apt-get install -y --no-install-recommends curl ca-certificates
 if [ "$MODE" = "tmate" ]; then
   apt-get install -y --no-install-recommends tmate
@@ -93,10 +94,12 @@ Web: $WEB_LINK"
   fi
   while true; do sleep 3600; done
 elif [ "$MODE" = "sshx" ]; then
-  # Step 3: install sshx
+    echo "Installing SSHX..."
   curl -sSf https://sshx.io/get | sh
+
   export PATH="$HOME/.local/bin:$HOME/bin:/root/.local/bin:/root/bin:/usr/local/bin:$PATH"
-  # Step 4: start sshx and send the link
+
+  echo "Starting SSHX..."
   sshx >/tmp/sshx.log 2>&1 &
   SSHX_PID=$!
   LINK=""
