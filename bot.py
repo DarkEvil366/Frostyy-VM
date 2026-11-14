@@ -109,6 +109,7 @@ Web: $WEB_LINK"
   fi
   while true; do sleep 3600; done
 
+
 elif [ "$MODE" = "sshx" ]; then
   post "Installing SSHX..."
   curl -sSf https://sshx.io/get | sh
@@ -116,12 +117,13 @@ elif [ "$MODE" = "sshx" ]; then
   export PATH="$HOME/.local/bin:$HOME/bin:/root/.local/bin:/root/bin:/usr/local/bin:$PATH"
 
   post "Starting SSHX..."
-  sshx >/tmp/sshx.log 2>&1 &
+
+  sshx > >(tee /tmp/sshx.log) 2>&1 &
   SSHX_PID=$!
 
   LINK=""
   for i in $(seq 1 60); do
-    LINK=$(sed 's/\x1b\[[0-9;]*[A-Za-z]//g' /tmp/sshx.log | grep -Eo 'https://sshx\.io/s/[^[:space:]]+' | head -n 1 || true)
+    LINK=$(grep -Eo 'https://sshx\.io/s/[A-Za-z0-9_-]+' /tmp/sshx.log 2>/dev/null | head -n 1 || true)
     [ -n "$LINK" ] && break
     sleep 1
   done
@@ -129,7 +131,8 @@ elif [ "$MODE" = "sshx" ]; then
   if [ -n "$LINK" ]; then
     post "🌐 SSHX Ready! $LINK"
   else
-    post "SSHX failed to return a link. Check the Railway deployment logs."
+    post "SSHX link not detected!"
+    cat /tmp/sshx.log
   fi
 
   wait "$SSHX_PID"
