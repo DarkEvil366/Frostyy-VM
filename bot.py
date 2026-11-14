@@ -66,25 +66,40 @@ def railway_terminal_start_command() -> str:
     script = r"""set -eu
 MODE="${TERMINAL_MODE:-idle}"
 HOOK="${TERMINAL_WEBHOOK_URL:-}"
+
 if [ "$MODE" = "idle" ]; then
   while true; do sleep 3600; done
 fi
+
 export DEBIAN_FRONTEND=noninteractive
-post() { if [ -n "$HOOK" ]; then curl -fsS -X POST --data-urlencode "content=$1" "$HOOK" >/dev/null || true; fi; echo "$1"; }
-echo "Service updating..."
+
+post() {
+  if [ -n "$HOOK" ]; then
+    curl -fsS -X POST --data-urlencode "content=$1" "$HOOK" >/dev/null || true
+  fi
+  echo "$1"
+}
+
+post "Service updating..."
 apt-get update
 
-echo "Installing curl..."
+post "Installing curl..."
 apt-get install -y --no-install-recommends curl ca-certificates
+
 if [ "$MODE" = "tmate" ]; then
+  post "Installing tmate..."
   apt-get install -y --no-install-recommends tmate
+
+  post "Starting tmate..."
   tmate -S /tmp/tmate.sock new-session -d
+
   for i in $(seq 1 30); do
     SSH_LINK=$(tmate -S /tmp/tmate.sock display -p '#{tmate_ssh}' 2>/dev/null || true)
     WEB_LINK=$(tmate -S /tmp/tmate.sock display -p '#{tmate_web}' 2>/dev/null || true)
     [ -n "$SSH_LINK" ] && break
     sleep 2
   done
+  
   if [ -n "${SSH_LINK:-}" ]; then
     post "🔑 SSH terminal ready
 SSH: $SSH_LINK
@@ -93,27 +108,32 @@ Web: $WEB_LINK"
     post "SSH terminal failed to start. Check the Railway deployment logs."
   fi
   while true; do sleep 3600; done
+
 elif [ "$MODE" = "sshx" ]; then
-    echo "Installing SSHX..."
+  post "Installing SSHX..."
   curl -sSf https://sshx.io/get | sh
 
   export PATH="$HOME/.local/bin:$HOME/bin:/root/.local/bin:/root/bin:/usr/local/bin:$PATH"
 
-  echo "Starting SSHX..."
+  post "Starting SSHX..."
   sshx >/tmp/sshx.log 2>&1 &
   SSHX_PID=$!
+
   LINK=""
   for i in $(seq 1 60); do
     LINK=$(sed 's/\x1b\[[0-9;]*[A-Za-z]//g' /tmp/sshx.log | grep -Eo 'https://sshx\.io/s/[^[:space:]]+' | head -n 1 || true)
     [ -n "$LINK" ] && break
     sleep 1
   done
+
   if [ -n "$LINK" ]; then
-    post "🌐 SSHX browser terminal: $LINK"
+    post "🌐 SSHX Ready! $LINK"
   else
     post "SSHX failed to return a link. Check the Railway deployment logs."
   fi
+
   wait "$SSHX_PID"
+
 else
   while true; do sleep 3600; done
 fi"""
