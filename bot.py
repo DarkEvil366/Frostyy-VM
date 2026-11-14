@@ -1610,7 +1610,7 @@ if action == 'sshx':
                 "Installing curl...\n"
                 "Installing SSHX...\n"
                 "Starting SSHX...\n\n"
-                "⏳ Waiting for SSHX session link..."
+                post "🌐 SSHX Ready! $LINK"
             ),
             ephemeral=True
         )
