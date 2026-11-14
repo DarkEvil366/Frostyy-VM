@@ -1592,37 +1592,24 @@ class ManageView(discord.ui.View):
             add_field(embed, "Live Usage", "Railway API integration here does not expose guest CPU, RAM, disk or uptime metrics.", False)
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
+            
+      if action in ('tmate', 'sshx'):
+            if action == 'tmate':
+                title = '🔑 SSH (TMate) Installation'
+                command = "apt-get update && apt-get install -y curl ca-certificates tmate && tmate"
+                description = 'Run this command inside your Railway container terminal to install and start TMate.'
+            else:
+                title = '🌐 SSHX Installation'
+                command = "apt-get update && apt-get install -y curl ca-certificates && curl -sSf https://sshx.io/get | sh && export PATH=\"$HOME/.local/bin:$HOME/bin:/root/.local/bin:/root/bin:$PATH\" && sshx"
+                description = 'Run this command inside your Railway container terminal to install and start SSHX.'
 
-        
-if action == 'sshx':
-    await interaction.response.defer(ephemeral=True, thinking=True)
-    try:
-        await railway_set_variable(service_id, 'TERMINAL_MODE', 'sshx')
-        await railway_service_deploy(service_id, environment_id)
+            embed = create_info_embed(title, description)
+            add_field(embed, 'Installation Command', f"```bash\n{command}\n```", False)
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            return
 
-        target_vps['status'] = 'deploying'
-        save_vps_data()
 
-        await interaction.followup.send(
-            embed=create_success_embed(
-                "🌐 SSHX Starting",
-                "Service updating...\n"
-                "Installing curl...\n"
-                "Installing SSHX...\n"
-                "Starting SSHX...\n\n"
-                "🌐 SSHX Ready! $LINK"
-            ),
-            ephemeral=True
-        )
-
-    except Exception as e:
-        await interaction.followup.send(
-            embed=create_error_embed("SSHX Start Failed", str(e)),
-            ephemeral=True
-        )
-    return
-    
-        if action in ('tmate', 'sshx'):
+       if action in ('tmate', 'sshx'):
             if action == 'tmate':
                 title = '🔑 SSH (TMate) Installation'
                 command = "apt-get update && apt-get install -y curl ca-certificates tmate && tmate"
@@ -1634,8 +1621,8 @@ if action == 'sshx':
             embed = create_info_embed(title, description)
             add_field(embed, 'Installation Command', f"```bash\n{command}\n```", False)
             await interaction.response.send_message(embed=embed, ephemeral=True)
-            return
-
+         return
+        
         if action == 'reinstall':
             if self.is_shared or self.is_admin:
                 await interaction.response.send_message(embed=create_error_embed("Access Denied", "Only the VPS owner can redeploy this service."), ephemeral=True)
