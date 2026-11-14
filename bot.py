@@ -1593,34 +1593,35 @@ class ManageView(discord.ui.View):
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 
-        if action == 'sshx':
-            await interaction.response.defer(ephemeral=True, thinking=True)
-            try:
-                # Set SSHX mode and redeploy: the Railway startup script runs apt update,
-                # installs curl, installs SSHX, then starts sshx inside the VPS container.
-                await railway_set_variable(service_id, 'TERMINAL_MODE', 'sshx')
-                await railway_service_deploy(service_id, environment_id)
-                target_vps['status'] = 'deploying'
-                save_vps_data()
-               
-                await interaction.followup.send(
-                    embed=create_success_embed(
-                        "🌐 SSHX Starting",
-                        "Service updating...\n"
-                        "Installing curl...\n"
-                        "Installing SSHX...\n"
-                        "Starting SSHX...\n\n"
-                        "The SSHX session URL is printed in Railway deployment logs."
-                    ),
-                    ephemeral=True
-                )
+        
+if action == 'sshx':
+    await interaction.response.defer(ephemeral=True, thinking=True)
+    try:
+        await railway_set_variable(service_id, 'TERMINAL_MODE', 'sshx')
+        await railway_service_deploy(service_id, environment_id)
 
-            except Exception as e:
-                await interaction.followup.send(
-                    embed=create_error_embed("SSHX Start Failed", str(e)), ephemeral=True
-                )
-            return
+        target_vps['status'] = 'deploying'
+        save_vps_data()
 
+        await interaction.followup.send(
+            embed=create_success_embed(
+                "🌐 SSHX Starting",
+                "Service updating...\n"
+                "Installing curl...\n"
+                "Installing SSHX...\n"
+                "Starting SSHX...\n\n"
+                "⏳ Waiting for SSHX session link..."
+            ),
+            ephemeral=True
+        )
+
+    except Exception as e:
+        await interaction.followup.send(
+            embed=create_error_embed("SSHX Start Failed", str(e)),
+            ephemeral=True
+        )
+    return
+    
         if action in ('tmate', 'sshx'):
             if action == 'tmate':
                 title = '🔑 SSH (TMate) Installation'
